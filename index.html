@@ -7,6 +7,8 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet"> 
 
+    <script src="util.js"></script>
+
     <style>
         html, body {
             padding: 0;
@@ -14,6 +16,7 @@
             width: 100%;
             height: 100%;
             background: #EEEEEE;
+            overflow: hidden;
         }
 
         body {
@@ -34,26 +37,47 @@
             border-radius: 10px;
             box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4), 0px 3px 6px rgba(0, 0, 0, 0.05);
 
-            overflow: hidden;
+            overflow: visible;
             cursor: pointer;
             transition: all .02s linear;
         }
         
         .card .text {
+            position: absolute;
+            z-index: 1;
+
+            max-width: 100px;
+            background: none;
+            color: #000000;
+            border: none;
+            outline: none;
             width: 100%;
             height: 89px;
 
             display: flex;
-            align-items: center;
+            padding-top: 0px;
+            flex-direction: column;
             font-family: 'Ma Shan Zheng', cursive;
             font-size: 60px;
+
+            white-space: pre;
+
+            transition: .1s all ease-out;
+
+            user-select: none;
         }
 
         .card .text > div {
-            margin: auto;
+            margin: 10px auto;
+            display: block;
+            transition: .1s all ease-out;
         }
 
         .card .tone {
+            position: absolute;
+            bottom: 0px;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
             width: 100%;
             height: 11px;
 
@@ -63,7 +87,7 @@
         .card.rising .tone { background-color: #98FF86 }
         .card.high .tone { background-color: #6EE5FF }
         .card.low .tone { background-color: #FFD234 }
-        .card.neutral .tone { background-color: #FFD234 }
+        .card.neutral .tone { background-color: #DDDDDD }
 
         .card.falling { transform: skew(0deg, 12deg) }
         .card.rising { transform: skew(0deg, -12deg) }
@@ -79,38 +103,187 @@
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1), 0px 5px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .card { opacity: 0.5 }
+        .card:not(.locked) {
+            opacity: 0.3;
+        }
         .card.locked { opacity: 1 }
+
+        .card.locked .text > div:not(.selected) {
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        input {
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+
+        }
     </style>
 </head>
 <body>
-    <div class="container off">
+    <div class="container">
+        
         <div class="card low">
-            <div class="text"><div>我</div></div>
+            <input class="input" />
+            <div class="text"><div class="selected">我</div></div>
             <div class="tone"></div>
         </div>
         <div class="card locked rising">
-            <div class="text"><div>来</div></div>
+            <input class="input" />
+            <div class="text"><div class="selected">来</div><div>来</div><div>来</div><div>来</div><div>来</div></div>
             <div class="tone"></div>
+            
         </div>
         <div class="card locked high">
-            <div class="text"><div>听</div></div>
+            <input class="input" />
+            <div class="text"><div class="selected">听</div></div>
             <div class="tone"></div>
         </div>
         <div class="card falling">
-            <div class="text"><div>课</div></div>
+            <input class="input" />
+            <div class="text"><div class="selected">课</div></div>
             <div class="tone"></div>
         </div>
     </div>
 
     <script>
+        let chars = "我不知道中国脑袋阿斯兰单位日期为人破碎在乡村年斯大林佛教阿斯评为"
+
+        let mouseTarget = null;
+
+        window.addEventListener('mousemove', function(e) {
+            mouseTarget = e.target;
+
+            if(e.target != undefined) {
+                if(card = e.target.closest('.card')) {
+                    let input = card.querySelector('.input')
+                    input.focus()
+
+                    input.oninput = function() {
+                        let text = card.querySelector('.text')
+
+                        text.innerHTML = '<div>' + input.value + '</div>'
+                    }
+                }
+            }
+        })
+
 	    window.addEventListener('click', function(e) {
             if(e.target != undefined) {
                 if(card = e.target.closest('.card')) {
                     card.classList.toggle('locked')
+
+                    let template = $$('.card').map(function(el) {
+                        if(el.classList.contains('locked')) {
+                            return el.querySelector('.text .selected').textContent
+                        } else {
+                            return '_'
+                        }
+                    })
+
+                    console.log(template.join(''))
+
+                    fetch('http://localhost:5000/prob/' + template.join('')).then(function(response) {
+                        return response.json()
+                    }).then(function(json) {
+                        json.forEach(function(arr, i) {
+                            if(arr.length > 1) {
+                                let text = $$('.card')[i].querySelector('.text')
+
+                                text.innerHTML = arr.map(function(char, i) {
+                                    if(char == 'BLANK') return ''
+                                    return `<div class="${i==0?'selected':''}">${ char }</div>`
+                                }).join('')
+
+                                text.偏移 = 0
+                                text.style.setProperty('transform', `translate(0px, 0px)`)
+                            }
+                        })
+                    })
+
+
+                    
                 }
             }
         })
+
+        function keydown(e) {
+            console.log(e)
+        }
+
+        window.addEventListener('keypress', function(e) {
+            /*if(mouseTarget != undefined) {
+                if(card = mouseTarget.closest('.card')) {
+                    text = card.querySelector('.text')
+                    
+                    text.removeAttribute('disabled')
+                    text.focus()
+
+                    // text.dispatchEvent(e);
+                    text.dispatchEvent(new KeyboardEvent('keypress', {'key': e.key}));
+                    // text.value = e.key
+
+                    text.onblur = function() {
+                        text.toggleAttribute('disabled')
+                    }
+                }
+            }*/
+        })
+
+        window.addEventListener('wheel', function(e) {
+            if(e.target != undefined) {
+                if(card  = e.target.closest('.card:not(.locked)')) {
+                    e.preventDefault()
+
+                    text = card.querySelector('.text')
+                    
+                    text.偏移 = (text.偏移 || 0) + e.deltaY * 5;
+                    let height = text.offsetHeight + 3;
+                    text.偏移 = Math.max(Math.min(text.偏移, 0), -(text.children.length-1)*height)
+
+                    let index = Math.round(-text.偏移 / height)
+                    let offsetY = -index * height;
+                    text.style.setProperty('transform', `translate(0px, ${ offsetY }px)`)
+
+                    ;[].slice.call(text.children).forEach(function(el, i) {
+                        el.style.setProperty('opacity', 1 / (Math.abs(index - i)+1))
+
+                        if(Math.abs(index - i) == 0) {
+                            el.classList.add('selected')
+
+                            fetch('http://localhost:5000/pinyin/number/' + el.textContent).then(function(result) {
+                                return result.text()
+                            }).then(function(pinyin) {
+                                let tone = Number(pinyin.slice(-1))
+
+                                card.classList.remove('high', 'rising', 'low', 'falling', 'neutral')
+                                card.classList.add(['high', 'rising', 'low', 'falling', 'neutral'][tone-1])
+                            })
+                        } else {
+                            el.classList.remove('selected')
+                        }
+                    })
+                }
+            }
+        })
+
+        window.addEventListener('touchstart', function(e) {
+            mouseTarget = e.target;
+        })
+
+        window.addEventListener('touchmove', function(e) {
+            if(e.target != undefined) {
+                if(card  = e.target.closest('.card')) {
+                    console.log(e); 
+                }
+            }
+        })
+
+        function get() {
+            fetch('')
+        }
     </script>
 </body>
 </html>
