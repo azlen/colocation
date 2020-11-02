@@ -120,31 +120,119 @@
             left: 0;
 
         }
+
+        .listen_button {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            border-radius: 100%;
+            cursor: pointer;
+        }
+
+        .listen_button:hover {
+            background-color:rgba(0, 0, 0, 0.1)
+        }
+
+        .listen_button:active {
+            background-color: rgba(0, 0, 0, 0.3)
+        }
+
+        .listen_button svg {
+            margin: auto;
+        }
+
+        .pinyin {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+
+            font-family:'Courier New', Courier, monospace;
+            color:rgba(0, 0, 0, 0.5);
+            bottom: -40px;
+            left: 0;
+            opacity: 1;
+            transition: all .1s ease-out;
+        }
+
+        .card:not(.locked) .pinyin {
+            opacity: 0;
+        }
+
+        .hover_text {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
     </style>
 </head>
 <body>
+    <div class="hover_text">
+
+    </div>
+    <div class="listen_button">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+    </div>
     <div class="container">
-        
-        <div class="card low">
+        <div class="card">
             <input class="input" />
-            <div class="text"><div class="selected">我</div></div>
+            <div class="text"><div class="selected"></div></div>
             <div class="tone"></div>
+
+            <div class="pinyin"></div>
         </div>
-        <div class="card locked rising">
+        <div class="card">
             <input class="input" />
-            <div class="text"><div class="selected">来</div><div>来</div><div>来</div><div>来</div><div>来</div></div>
+            <div class="text"><div class="selected"></div></div>
+            <div class="tone"></div>
+
+            <div class="pinyin"></div>
+        </div>
+        <div class="card">
+            <input class="input" />
+            <div class="text"><div class="selected"></div></div>
+            <div class="tone"></div>
+
+            <div class="pinyin"></div>
+        </div>
+        <div class="card locked falling">
+            <input class="input" />
+            <div class="text"><div class="selected">电</div></div>
             <div class="tone"></div>
             
+            <div class="pinyin"></div>
         </div>
-        <div class="card locked high">
+        <div class="card locked low">
             <input class="input" />
-            <div class="text"><div class="selected">听</div></div>
+            <div class="text"><div class="selected">脑</div></div>
             <div class="tone"></div>
+
+            <div class="pinyin"></div>
         </div>
-        <div class="card falling">
+        <div class="card">
             <input class="input" />
-            <div class="text"><div class="selected">课</div></div>
+            <div class="text"><div class="selected"></div></div>
             <div class="tone"></div>
+
+            <div class="pinyin"></div>
+        </div>
+        <div class="card">
+            <input class="input" />
+            <div class="text"><div class="selected"></div></div>
+            <div class="tone"></div>
+
+            <div class="pinyin"></div>
+        </div>
+        <div class="card">
+            <input class="input" />
+            <div class="text"><div class="selected"></div></div>
+            <div class="tone"></div>
+
+            <div class="pinyin"></div>
         </div>
     </div>
 
@@ -163,8 +251,21 @@
 
                     input.oninput = function() {
                         let text = card.querySelector('.text')
+                        
+                        // let REGEX = /(?![\u4e00-\u9fff]|[\u3400-\u4dbf]|[\u{20000}-\u{2a6df}]|[\u{2a700}-\u{2b73f}]|[\u{2b740}-\u{2b81f}]|[\u{2b820}-\u{2ceaf}]|[\uf900-\ufaff]|[\u3300-\u33ff]|[\ufe30-\ufe4f]|[\uf900-\ufaff]|[\u{2f800}-\u{2fa1f}])/u;
+                        // let chinese = input.value.replace(/[^(\p{Block=CJK Unified Ideographs}|\p{Block=CJK Unified Ideographs Extension A}|\p{Block=CJK Unified Ideographs Extension B}|\p{Block=CJK Unified Ideographs Extension C}|\p{Block=CJK Unified Ideographs Extension D}|\p{Block=CJK Unified Ideographs Extension E}|\p{Block=CJK Unified Ideographs Extension F}|[\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29])]/g, '')
 
-                        text.innerHTML = '<div>' + input.value + '</div>'
+                        let chinese = Array.from(input.value.matchAll(/\p{Script=Han}/ug  , '')).map(x => x[0]).join('')
+                        if(chinese.length > 0) {
+                            text.innerHTML = '<div class="selected">' + chinese[0] + '</div>'
+
+                            text.偏移 = 0
+                            text.style.setProperty('transform', `translate(0px, 0px)`)
+
+                            card.classList.add('locked')
+
+                            updatePredictions()
+                        }
                     }
                 }
             }
@@ -175,36 +276,7 @@
                 if(card = e.target.closest('.card')) {
                     card.classList.toggle('locked')
 
-                    let template = $$('.card').map(function(el) {
-                        if(el.classList.contains('locked')) {
-                            return el.querySelector('.text .selected').textContent
-                        } else {
-                            return '_'
-                        }
-                    })
-
-                    console.log(template.join(''))
-
-                    fetch('http://localhost:5000/prob/' + template.join('')).then(function(response) {
-                        return response.json()
-                    }).then(function(json) {
-                        json.forEach(function(arr, i) {
-                            if(arr.length > 1) {
-                                let text = $$('.card')[i].querySelector('.text')
-
-                                text.innerHTML = arr.map(function(char, i) {
-                                    if(char == 'BLANK') return ''
-                                    return `<div class="${i==0?'selected':''}">${ char }</div>`
-                                }).join('')
-
-                                text.偏移 = 0
-                                text.style.setProperty('transform', `translate(0px, 0px)`)
-                            }
-                        })
-                    })
-
-
-                    
+                    updatePredictions()
                 }
             }
         })
@@ -253,14 +325,7 @@
                         if(Math.abs(index - i) == 0) {
                             el.classList.add('selected')
 
-                            fetch('http://localhost:5000/pinyin/number/' + el.textContent).then(function(result) {
-                                return result.text()
-                            }).then(function(pinyin) {
-                                let tone = Number(pinyin.slice(-1))
-
-                                card.classList.remove('high', 'rising', 'low', 'falling', 'neutral')
-                                card.classList.add(['high', 'rising', 'low', 'falling', 'neutral'][tone-1])
-                            })
+                            updateTone(card)
                         } else {
                             el.classList.remove('selected')
                         }
@@ -268,6 +333,32 @@
                 }
             }
         })
+
+        function updateTone(card) {
+            let el = card.querySelector('.selected') || card.querySelector('.text > div')
+
+            console.log(card, el)
+
+            fetch('http://localhost:5000/pinyin/number/' + el.textContent).then(function(result) {
+                return result.text()
+            }).then(function(pinyin) {
+                let tone = Number(pinyin.slice(-1))
+
+                card.classList.remove('high', 'rising', 'low', 'falling', 'neutral')
+                card.classList.add(['high', 'rising', 'low', 'falling', 'neutral'][tone-1])
+            })
+        }
+
+        function addPinyin(card) {
+            let el = card.querySelector('.selected')
+
+            fetch('http://localhost:5000/pinyin/tone/' + el.textContent).then(function(result) {
+                return result.text()
+            }).then(function(pinyin) {
+                card.querySelector('.pinyin').textContent = pinyin
+            })
+            
+        }
 
         window.addEventListener('touchstart', function(e) {
             mouseTarget = e.target;
@@ -284,6 +375,71 @@
         function get() {
             fetch('')
         }
+
+        function getSound(text) {
+            let data = {
+                "text": text,
+                "speakingRate": 0.5
+            }
+
+            fetch('http://localhost:3000/speak', {
+                method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                //mode: 'cors', // no-cors, *cors, same-origin
+                //cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+                //credentials: 'same-origin', // include, *same-origin, omit
+                headers: {
+                'Content-Type': 'application/json'
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                redirect: 'follow', // manual, *follow, error
+                referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                body: JSON.stringify(data) // body data type must match "Content-Type" header
+            }).then(function(response) {
+                console.log(response)
+            }).catch(function(error) {
+                console.log('ERROR', error)
+            });
+        }
+
+
+        function updatePredictions() {
+            let template = $$('.card').map(function(el) {
+                if(el.classList.contains('locked')) {
+                    return el.querySelector('.text .selected').textContent
+                } else {
+                    return '_'
+                }
+            })
+
+            $('.hover_text').textContent = template.join('')
+
+            fetch('http://localhost:5000/prob/' + template.join('')).then(function(response) {
+                return response.json()
+            }).then(function(json) {
+                json.forEach(function(arr, i) {
+                    if(arr.length > 1) {
+                        let text = $$('.card')[i].querySelector('.text')
+
+                        text.innerHTML = arr.map(function(char) {
+                            if(char == 'BLANK') return ''
+                            return `<div>${ char }</div>`
+                        }).join('')
+
+                        text.children[0].classList.add('selected')
+
+                        updateTone(text.parentElement)
+                        console.log(i)
+
+                        text.偏移 = 0
+                        text.style.setProperty('transform', `translate(0px, 0px)`)
+                    } else {
+                        addPinyin($$('.card')[i])
+                    }
+                })
+            })
+        }
+
+        updatePredictions()
     </script>
 </body>
 </html>

@@ -1,2 +1,4 @@
 data.json
-__pychache__/
+__pychache__/**/*
+bilstm-768*
+tokenizer_table.json
