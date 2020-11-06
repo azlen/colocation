@@ -2,3 +2,6 @@ data.json
 __pychache__/**/*
 bilstm-768*
 tokenizer_table.json
+data/
+.vscode/
+__pycache__/
