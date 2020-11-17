@@ -8,7 +8,7 @@ from flask_cors import CORS, cross_origin
 from nlp import endpoint, is_chinese
 # from prob import get3
 
-verbose = False
+verbose = True
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -33,6 +33,10 @@ def get_pinyin_tone(chinese):
 # @cross_origin()
 # def get_probabilities(template):
 #   return json.dumps(get3(template))
+
+# make more efficient
+# unroll with shorter local contexts
+# limit beam search to no more than 3 steps. maybe come up with an efficient implementation
 
 @app.route('/prob/<template>')
 @cross_origin()
@@ -59,18 +63,20 @@ def get_nlp_probabilities(template):
       # let's do some inference
       start = chunks[i - 1] if i != 0 else ''
       end = chunks[i + 1] if i < len(chunks) - 1 else ''
-      mask_len = len(chunk)
+      mask_len = min([len(chunk), 3])
+      offset = len(chunk) - mask_len
       if verbose: print(f'start: {start}, end: {end}, mask_len: {mask_len}')
       fill = endpoint(start, end, mask_len)['chars'][:8]
       if verbose: print(f'fill: {fill}')
       for i in range(mask_len):
         out_chars.append([])
-        for sentence in fill:
-          out_chars[-1].append(sentence[i + len(start)])
-        char_set = []
-        for char in out_chars[-1]:
-          if char not in char_set and is_chinese(char): char_set.append(char)
-        out_chars[-1] = char_set
+        if offset < i + 1:
+          for sentence in fill:
+            out_chars[-1].append(sentence[i + len(start)])
+          char_set = []
+          for char in out_chars[-1]:
+            if char not in char_set and is_chinese(char): char_set.append(char)
+          out_chars[-1] = char_set
       if verbose: print(out_chars)
     else:
       for char in chunk:

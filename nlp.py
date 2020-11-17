@@ -112,7 +112,7 @@ model.inference("你好")
 model.load_weights('./data/bilstm-768-contd.ckpt')
 
 
-def beam_search(text, num_branches=4, verbose=False):
+def beam_search(text, num_branches=3, verbose=False):
   cands, probs = [text], [0]
   all_cands, all_probs = [], []
   while len(cands) > 0:
